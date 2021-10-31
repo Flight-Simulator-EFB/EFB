@@ -16,12 +16,15 @@ namespace EFB.Controllers.API
 
             this.HttpClient.DefaultRequestHeaders.Clear();
 
-            foreach (var Header in Headers)
+            if (Headers != null)
             {
-                this.HttpClient.DefaultRequestHeaders.Add(Header.Key, Header.Value);
+                foreach (var Header in Headers)
+                {
+                    this.HttpClient.DefaultRequestHeaders.Add(Header.Key, Header.Value);
+                }
             }
 
-            if (!Form.FormAuthenticator.ValidateEndpoint(Endpoint))
+            if (Form.FormAuthenticator.ValidateEndpoint(Endpoint))
             {
                 var pendingResult = this.HttpClient.GetAsync(Endpoint);
 
@@ -41,22 +44,23 @@ namespace EFB.Controllers.API
             
         }
 
-        public async Task<T> Post<T>(string Endpoint, Dictionary<string, string> Headers, object Body){
+        public async Task<T> Post<T>(string Endpoint, Dictionary<string, string> Headers, HttpContent Body){
 
             this.HttpClient = new HttpClient();
 
-            this.HttpClient.DefaultRequestHeaders.Clear();
+            //this.HttpClient.DefaultRequestHeaders.Clear();
 
-            foreach (var Header in Headers)
+            if (Headers != null)
             {
-                this.HttpClient.DefaultRequestHeaders.Add(Header.Key, Header.Value);
+                foreach (var Header in Headers)
+                {
+                    this.HttpClient.DefaultRequestHeaders.Add(Header.Key, Header.Value);
+                }
             }
 
-            StringContent content = new StringContent(JsonConvert.SerializeObject(Body), Encoding.UTF8, "application/json");
-
-            if (!Form.FormAuthenticator.ValidateEndpoint(Endpoint))
+            if (Form.FormAuthenticator.ValidateEndpoint(Endpoint))
             {
-                var pendingResult = this.HttpClient.PostAsync(Endpoint, content);
+                var pendingResult = this.HttpClient.PostAsync(Endpoint, Body);
 
                 var result = await pendingResult;
 

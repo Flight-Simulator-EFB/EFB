@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace EFB.Controllers.FormAuthenticator
+namespace EFB.Controllers.Form
 {
     public static class FormAuthenticator
     {

@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
 using EFB.Models.JSON;
 using Microsoft.Extensions.Logging;
+using EFB.Models;
+using EFB.Sessions;
 
 namespace EFB.Controllers
 {
@@ -45,17 +47,39 @@ namespace EFB.Controllers
                 var request = API.Post<Models.JSON.LoginResponse>("https://api.autorouter.aero/v1.0/oauth2/token", null, content);
 
                 //Wait for the response to come through
-                var response = await request;
+                ResponseModel response = await request;
 
-                if (response.error != null)
+                if (response.Error != null)
                 {
-
-                    TempData["Error"] = response.error_description;
+                    TempData["Error"] = response.Error;
+                    TempData["email"] = email;
                     return RedirectToAction("Index", "Home");
-
                 }else{
-                    //Create a user session and continue
-                   return RedirectToAction("Index", "Home");
+
+                    //Type cast required but we know response will be of known type
+                    LoginResponse login = (LoginResponse)response.Result;
+
+                    //Generate User Session
+                    if (login.error == null)
+                    {
+                        UserModel user = new UserModel{
+                            EMail = email,
+                            Token = new TokenModel{
+                                Token = login.access_token,
+                                Expiration = DateTime.UtcNow.AddSeconds(login.expires_in)
+                            }
+                        };
+
+                        //Using Session Extensions (Store the user session)
+                        HttpContext.Session.SetObject("User", user);
+                        return RedirectToAction("App", "Home");
+                    }else{
+                        TempData["Error"] = login.error_description;
+                        TempData["email"] = email;
+                        return RedirectToAction("Index", "Home");
+                    }
+
+                    
                 }
 
             }else{

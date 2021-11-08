@@ -26,14 +26,5 @@ namespace EFB.Models
         //Contains the most recently stored position of the user in the simulator
         public object SimPosition { get; set; } = null;
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
     }
 }

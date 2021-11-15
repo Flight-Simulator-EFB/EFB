@@ -72,7 +72,7 @@ namespace EFB.Controllers
 
                         //Using Session Extensions (Store the user session)
                         HttpContext.Session.SetObject("User", user);
-                        return RedirectToAction("App", "Home");
+                        return RedirectToAction("Index", "App");
                     }else{
                         TempData["Error"] = login.error_description;
                         TempData["email"] = email;

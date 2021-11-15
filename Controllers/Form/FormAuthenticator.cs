@@ -9,7 +9,7 @@ namespace EFB.Controllers.Form
     {
         
         public static bool ValidateEMail(string EMail){
-            if (EMail.Contains("@") && EMail.Contains(".") && !EMail.Contains(" "))
+            if (EMail != null && EMail.Contains("@") && EMail.Contains(".") && !EMail.Contains(" "))
             {
                 if (EMail.Count(x => x == '@') == 1)
                 {

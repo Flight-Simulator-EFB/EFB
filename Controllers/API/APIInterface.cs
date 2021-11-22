@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using System;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Net.Http;
@@ -35,9 +36,18 @@ namespace EFB.Controllers.API
 
                     string resultString = result.Content.ReadAsStringAsync().Result;
 
+                    object response;
+
+                    //Assess return value (object or raw string)
+                    try{
+                        response = JsonConvert.DeserializeObject<T>(resultString);
+                    }catch {
+                        response = resultString;
+                    }
+
                     return new ResponseModel{
                         //Sender should be aware of type T becuase of Generic function
-                        Result = JsonConvert.DeserializeObject<T>(resultString)
+                        Result = response
                     };
                 }
                 catch (System.Exception e)
@@ -70,10 +80,17 @@ namespace EFB.Controllers.API
                     var pendingResult = this.HttpClient.PostAsync(Endpoint, Body);
                     var result = await pendingResult;
                     string resultString = result.Content.ReadAsStringAsync().Result;
+                    
+                    object response = resultString;
 
-                    return new ResponseModel{
+                    if (typeof(T) != typeof(string))
+                    {//If the user requests string for return type
+                        response = JsonConvert.DeserializeObject<T>(resultString);
+                    }
+
+                    return new ResponseModel(){
                         //Sender should be aware of type T becuase of Generic function
-                        Result = JsonConvert.DeserializeObject<T>(resultString)
+                        Result = response
                     };
                 }catch(System.Exception e){
                     return new ResponseModel{Error = e.Message};

@@ -1,13 +1,17 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Text;
+using System.Net.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 using EFB.Models;
+using EFB.Models.JSON;
 using EFB.Sessions;
+using EFB.Controllers.Form;
+using EFB.Controllers.API;
 
 namespace EFB.Controllers
 {
@@ -23,8 +27,8 @@ namespace EFB.Controllers
         public IActionResult Index()
         {
             //Check the user has a valid login
-            UserModel User = HttpContext.Session.GetObject<UserModel>("User");
-            if (User == null || User.Route != null || User.Token.IsExpired())
+            UserModel user = HttpContext.Session.GetObject<UserModel>("User");
+            if (user == null || user.Route != null || user.Token.IsExpired())
             {
                 return RedirectToAction("Index", "Home");
             }
@@ -36,6 +40,65 @@ namespace EFB.Controllers
         public IActionResult Error()
         {
             return View("Error!");
+        }
+
+        public async  Task<IActionResult> New(string departure, string arrival, string cruise){
+            UserModel user = HttpContext.Session.GetObject<UserModel>("User");
+            if (!(user == null || user.Token.IsExpired()))
+            {//If the user is still authenticated
+                if (FormAuthenticator.ValidateICAOCode(departure) && FormAuthenticator.ValidateICAOCode(arrival))
+                {//If the user has entered valid ICAOs
+                    
+                    uint cruiseAlt;
+
+                    if (uint.TryParse(cruise, out cruiseAlt) && FormAuthenticator.ValidateCruiseAlt(cruiseAlt))
+                    {//If the cruise altitude if within limits.
+                        
+                        //Submit route request...
+                        APIInterface API = new APIInterface();
+
+                        //Prepare data to be send off with request (route)
+                        Dictionary<string, string> headerData = new Dictionary<string, string>();
+                        headerData.Add("Authorization", $"Bearer {user.Token.TokenValue}");
+
+                        RouteRequest routeRequest = new RouteRequest(){
+                            departure = departure,
+                            destination = arrival,
+                            preferredminlevel = cruiseAlt / 1000,
+                            preferredmaxlevel = cruiseAlt / 1000,
+                        };
+                        StringContent content = new StringContent(JsonConvert.SerializeObject(routeRequest), Encoding.UTF8, "application/json");
+                        
+                        //Make initial Route Request
+                        var requestRoute = API.Post<string>("https://api.autorouter.aero/v1.0/router", headerData, content);
+
+                        ResponseModel responseRoute = await requestRoute;
+
+                        if (responseRoute.Error == null)
+                        {//Update User session and add route ID
+                            RouteModel route = new RouteModel(){
+                                RouteID = responseRoute.Result.ToString()
+                            };
+
+                            user.Route = route;
+                            HttpContext.Session.SetObject("User", user);
+
+                        }
+
+                        TempData["Error"] = responseRoute.Error;
+                        return RedirectToAction("Index", "Route");
+
+                    }
+                    TempData["Error"] = "Invalid Cruise Altitude";
+                    TempData["Departure"] = departure;
+                    TempData["Arrival"] = arrival;
+                    return RedirectToAction("Index", "Route");
+
+                }
+                TempData["Error"] = "Invalid Departure or Arrival ICAO";
+                return RedirectToAction("Index", "Route");
+            }
+            return RedirectToAction("Index", "Home");
         }
     }
 }

@@ -13,7 +13,9 @@ namespace EFB.Models
 
             Route only becomes populated after route is recieved from autorouter API
         */
-        public WaypointModel Departure { get; init; } = null;
+        public string RouteID { get; init; }
+        
+        public WaypointModel Departure { get; set; } = null;
         public WaypointModel Arrival { get; set; } = null;
         public IWaypoint Current { get; set; } = null;
         public uint Cruise { get; set; } = 0;

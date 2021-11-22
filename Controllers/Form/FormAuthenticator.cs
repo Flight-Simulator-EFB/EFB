@@ -37,7 +37,7 @@ namespace EFB.Controllers.Form
             return false;
         }
 
-        public static bool ValidateCruiseAlt(int CruiseAlt){
+        public static bool ValidateCruiseAlt(uint CruiseAlt){
             if (CruiseAlt > 0 && CruiseAlt < 50000)
             {
                 return true;

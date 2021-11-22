@@ -10,7 +10,7 @@ namespace EFB.Models
         /*
             Auto Router API Token Model
         */
-        public string Token { get; init; }
+        public string TokenValue { get; init; }
         public DateTime Expiration { get; init; }
 
         public bool IsExpired(){

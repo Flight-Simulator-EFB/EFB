@@ -100,5 +100,26 @@ namespace EFB.Controllers
             }
             return RedirectToAction("Index", "Home");
         }
+
+
+        public async  Task<IActionResult> Poll(){
+            if (HttpContext.Session.GetString("User") != null)
+            {//If the user is currently logged in
+                UserModel User = HttpContext.Session.GetObject<UserModel>("User");
+
+                if (User.Route != null)
+                {//If the user has a route object (e.g, they have been to the route page)
+                    
+                    //Make calls to the server to fetch route
+                    return RedirectToAction("Index", "Route");
+
+                }else{
+                    return RedirectToAction("Index", "Route");
+                }
+                
+            }else{
+                return RedirectToAction("Index", "Route");
+            }
+        }
     }
 }

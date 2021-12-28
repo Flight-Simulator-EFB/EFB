@@ -47,7 +47,7 @@ namespace EFB.Controllers
                 var request = API.Post<Models.JSON.LoginResponse>("https://api.autorouter.aero/v1.0/oauth2/token", null, content);
 
                 //Wait for the response to come through
-                ResponseModel response = await request;
+                ResponseModel<LoginResponse> response = await request;
 
                 if (response.Error != null)
                 {
@@ -57,7 +57,7 @@ namespace EFB.Controllers
                 }else{
 
                     //Type cast required but we know response will be of known type
-                    LoginResponse login = (LoginResponse)response.Result;
+                    LoginResponse login = response.Result;
 
                     //Generate User Session
                     if (login.error == null)

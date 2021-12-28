@@ -72,7 +72,7 @@ namespace EFB.Controllers
                         //Make initial Route Request
                         var requestRoute = API.Post<string>("https://api.autorouter.aero/v1.0/router", headerData, content);
 
-                        ResponseModel responseRoute = await requestRoute;
+                        ResponseModel<string> responseRoute = await requestRoute;
 
                         if (responseRoute.Error == null)
                         {//Update User session and add route ID
@@ -82,6 +82,8 @@ namespace EFB.Controllers
 
                             user.Route = route;
                             HttpContext.Session.SetObject("User", user);
+
+                            return await Poll();
 
                         }
 
@@ -105,12 +107,33 @@ namespace EFB.Controllers
         public async  Task<IActionResult> Poll(){
             if (HttpContext.Session.GetString("User") != null)
             {//If the user is currently logged in
-                UserModel User = HttpContext.Session.GetObject<UserModel>("User");
+                UserModel user = HttpContext.Session.GetObject<UserModel>("User");
 
-                if (User.Route != null)
+                if (user.Route != null)
                 {//If the user has a route object (e.g, they have been to the route page)
                     
                     //Make calls to the server to fetch route
+                    bool collected = false;
+                    int count = 0;
+
+                    APIInterface API = new APIInterface();
+
+                    Dictionary<string, string> headerData = new Dictionary<string, string>();
+                    headerData.Add("Authorization", $"Bearer {user.Token.TokenValue}");
+
+                    while (collected == false && count <= 5)
+                    {
+                        count ++;
+                        
+                        //Make Polling Request
+                        var pollingRequest = API.Put<List<PollResponse>>($"https://api.autorouter.aero/v1.0/router/{user.Route.RouteID}/longpoll", headerData, null);
+                        
+                        ResponseModel<List<PollResponse>> responsePoll = await pollingRequest;
+
+                        Console.WriteLine(responsePoll);
+                        
+                    }
+
                     return RedirectToAction("Index", "Route");
 
                 }else{

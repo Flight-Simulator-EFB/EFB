@@ -130,6 +130,8 @@ namespace EFB.Controllers
                         
                         ResponseModel<List<PollResponse>> responsePoll = await pollingRequest;
 
+
+                        //put request returns JSON that cannot be serialised by default
                         Console.WriteLine(responsePoll);
                         
                     }

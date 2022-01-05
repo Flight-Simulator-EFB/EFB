@@ -6,7 +6,6 @@ using Newtonsoft.Json;
 
 namespace EFB.Models.JSON
 {
-    [JsonArray]
     public class PollResponse
     {
         [JsonProperty(PropertyName = "cmdname")]

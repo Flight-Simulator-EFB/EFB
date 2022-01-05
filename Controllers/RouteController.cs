@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using System.Threading;
 using System.Collections.Generic;
 using System.Text;
 using System.Net.Http;
@@ -115,6 +116,7 @@ namespace EFB.Controllers
                     //Make calls to the server to fetch route
                     bool collected = false;
                     int count = 0;
+                    string route;
 
                     APIInterface API = new APIInterface();
 
@@ -123,18 +125,24 @@ namespace EFB.Controllers
 
                     while (collected == false && count <= 5)
                     {
-                        count ++;
-                        
                         //Make Polling Request
                         var pollingRequest = API.Put<List<PollResponse>>($"https://api.autorouter.aero/v1.0/router/{user.Route.RouteID}/longpoll", headerData, null);
                         
                         ResponseModel<List<PollResponse>> responsePoll = await pollingRequest;
 
 
-                        //put request returns JSON that cannot be serialised by default
-                        Console.WriteLine(responsePoll);
+                        if (responsePoll.Result[count].Command == "solution")
+                        {
+                            collected = true;
+                            route = responsePoll.Result[count].FlightPlan;
+                            break;
+                        }
+
+                        Thread.Sleep(5000);
+                        count ++;
                         
                     }
+
 
                     return RedirectToAction("Index", "Route");
 

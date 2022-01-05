@@ -43,18 +43,19 @@ namespace EFB.Controllers
             return View("Error!");
         }
 
-        public async  Task<IActionResult> New(string departure, string arrival, string cruise){
+        public async Task<IActionResult> New(string departure, string arrival, string cruise)
+        {
             UserModel user = HttpContext.Session.GetObject<UserModel>("User");
             if (!(user == null || user.Token.IsExpired()))
             {//If the user is still authenticated
                 if (FormAuthenticator.ValidateICAOCode(departure) && FormAuthenticator.ValidateICAOCode(arrival))
                 {//If the user has entered valid ICAOs
-                    
+
                     uint cruiseAlt;
 
                     if (uint.TryParse(cruise, out cruiseAlt) && FormAuthenticator.ValidateCruiseAlt(cruiseAlt))
                     {//If the cruise altitude if within limits.
-                        
+
                         //Submit route request...
                         APIInterface API = new APIInterface();
 
@@ -62,14 +63,15 @@ namespace EFB.Controllers
                         Dictionary<string, string> headerData = new Dictionary<string, string>();
                         headerData.Add("Authorization", $"Bearer {user.Token.TokenValue}");
 
-                        RouteRequest routeRequest = new RouteRequest(){
+                        RouteRequest routeRequest = new RouteRequest()
+                        {
                             departure = departure,
                             destination = arrival,
                             preferredminlevel = cruiseAlt / 1000,
                             preferredmaxlevel = cruiseAlt / 1000,
                         };
                         StringContent content = new StringContent(JsonConvert.SerializeObject(routeRequest), Encoding.UTF8, "application/json");
-                        
+
                         //Make initial Route Request
                         var requestRoute = API.Post<string>("https://api.autorouter.aero/v1.0/router", headerData, content);
 
@@ -77,7 +79,8 @@ namespace EFB.Controllers
 
                         if (responseRoute.Error == null)
                         {//Update User session and add route ID
-                            RouteModel route = new RouteModel(){
+                            RouteModel route = new RouteModel()
+                            {
                                 RouteID = responseRoute.Result.ToString()
                             };
 
@@ -105,18 +108,19 @@ namespace EFB.Controllers
         }
 
 
-        public async  Task<IActionResult> Poll(){
+        public async Task<IActionResult> Poll()
+        {
             if (HttpContext.Session.GetString("User") != null)
             {//If the user is currently logged in
                 UserModel user = HttpContext.Session.GetObject<UserModel>("User");
 
                 if (user.Route != null)
                 {//If the user has a route object (e.g, they have been to the route page)
-                    
+
                     //Make calls to the server to fetch route
                     bool collected = false;
                     int count = 0;
-                    string route;
+                    string route = "";
 
                     APIInterface API = new APIInterface();
 
@@ -127,32 +131,71 @@ namespace EFB.Controllers
                     {
                         //Make Polling Request
                         var pollingRequest = API.Put<List<PollResponse>>($"https://api.autorouter.aero/v1.0/router/{user.Route.RouteID}/longpoll", headerData, null);
-                        
+
                         ResponseModel<List<PollResponse>> responsePoll = await pollingRequest;
 
 
-                        if (responsePoll.Result[count].Command == "solution")
+                        int routePos = responsePoll.Result.Count - 1;
+                        if (responsePoll.Result[routePos].Command == "solution")
                         {
                             collected = true;
-                            route = responsePoll.Result[count].FlightPlan;
+                            route = responsePoll.Result[routePos].FlightPlan;
                             break;
                         }
 
                         Thread.Sleep(5000);
-                        count ++;
-                        
+                        count++;
+
                     }
 
+                    if (collected)
+                    {
+                        //fill in route
+                        string finalRoute = ParseRoute(route);
 
+                        TempData["Error"] = finalRoute;
+                        return RedirectToAction("Index", "Route");
+                    }
+
+                    TempData["Error"] = "Unable to get route!";
                     return RedirectToAction("Index", "Route");
 
-                }else{
+                }
+                else
+                {
                     return RedirectToAction("Index", "Route");
                 }
-                
-            }else{
+
+            }
+            else
+            {
                 return RedirectToAction("Index", "Route");
             }
+        }
+
+        private string ParseRoute(string route){
+            TempData["Error"] = route;
+            
+            route.Replace('/', ' ');
+            var routeArr = route.Split(' ');
+
+            string finalRoute = "";
+
+            foreach (var item in routeArr)
+            {
+                var waypoint = item.Split('/')[0];
+                if (waypoint.Length <= 7 && waypoint.Length >= 3 && !waypoint.Contains('-'))
+                {
+                    finalRoute += $"{waypoint} ";
+
+                    if (waypoint.Length == 7 && finalRoute.Length > 8)
+                        break;
+                    
+                }
+            }
+
+            return finalRoute;
+
         }
     }
 }

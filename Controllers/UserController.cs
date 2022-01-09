@@ -64,7 +64,7 @@ namespace EFB.Controllers
                     {
                         UserModel user = new UserModel{
                             EMail = email,
-                            Token = new TokenModel{
+                            UserToken = new TokenModel{
                                 TokenValue = login.access_token,
                                 Expiration = DateTime.UtcNow.AddSeconds(login.expires_in)
                             }

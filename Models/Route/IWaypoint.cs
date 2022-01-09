@@ -15,5 +15,6 @@ namespace EFB.Models.Route
         public IWaypoint Next { get; set; }
         public IWaypoint Previous { get; set; }
         public bool Visited { get; set; }
+        
     }
 }

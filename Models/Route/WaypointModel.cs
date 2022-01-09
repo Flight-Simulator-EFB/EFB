@@ -16,20 +16,10 @@ namespace EFB.Models.Route
         public IWaypoint Previous { get; set; } = null;
         public bool Visited { get; set; }
 
-
-
-
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        public WaypointModel(string name, string airway){
+            Name = name;
+            Airway = airway;
+        }
         
     }
 }

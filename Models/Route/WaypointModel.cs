@@ -18,7 +18,7 @@ namespace EFB.Models.Route
 
         public WaypointModel(string name, string airway){
             Name = name;
-            Airway = Airway;
+            Airway = airway;
         }
         
     }

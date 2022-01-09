@@ -29,7 +29,7 @@ namespace EFB.Controllers
         {
             //Check the user has a valid login
             UserModel user = HttpContext.Session.GetObject<UserModel>("User");
-            if (user == null || user.Route != null || user.Token.IsExpired())
+            if (user == null || user.UserToken.IsExpired())
             {
                 return RedirectToAction("Index", "Home");
             }
@@ -46,7 +46,7 @@ namespace EFB.Controllers
         public async Task<IActionResult> New(string departure, string arrival, string cruise)
         {
             UserModel user = HttpContext.Session.GetObject<UserModel>("User");
-            if (!(user == null || user.Token.IsExpired()))
+            if (!(user == null || user.UserToken.IsExpired()))
             {//If the user is still authenticated
                 if (FormAuthenticator.ValidateICAOCode(departure) && FormAuthenticator.ValidateICAOCode(arrival))
                 {//If the user has entered valid ICAOs
@@ -61,7 +61,7 @@ namespace EFB.Controllers
 
                         //Prepare data to be send off with request (route)
                         Dictionary<string, string> headerData = new Dictionary<string, string>();
-                        headerData.Add("Authorization", $"Bearer {user.Token.TokenValue}");
+                        headerData.Add("Authorization", $"Bearer {user.UserToken.TokenValue}");
 
                         RouteRequest routeRequest = new RouteRequest()
                         {
@@ -79,15 +79,15 @@ namespace EFB.Controllers
 
                         if (responseRoute.Error == null)
                         {//Update User session and add route ID
-                            RouteModel route = new RouteModel()
+                            TokenModel routeToken = new TokenModel()
                             {
-                                RouteID = responseRoute.Result.ToString()
+                                TokenValue = responseRoute.Result.ToString()
                             };
 
-                            user.Route = route;
+                            user.RouteToken = routeToken;
                             HttpContext.Session.SetObject("User", user);
 
-                            return await Poll();
+                            return await Poll(departure, arrival, cruiseAlt);
 
                         }
 
@@ -108,29 +108,29 @@ namespace EFB.Controllers
         }
 
 
-        public async Task<IActionResult> Poll()
+        public async Task<IActionResult> Poll(string departure, string arrival, uint cruise)
         {
             if (HttpContext.Session.GetString("User") != null)
             {//If the user is currently logged in
                 UserModel user = HttpContext.Session.GetObject<UserModel>("User");
 
-                if (user.Route != null)
+                if (user.RouteToken != null)
                 {//If the user has a route object (e.g, they have been to the route page)
 
                     //Make calls to the server to fetch route
                     bool collected = false;
-                    int count = 0;
-                    string route = "";
+                    int pollCount = 0;
+                    string routeString = "";
 
                     APIInterface API = new APIInterface();
 
                     Dictionary<string, string> headerData = new Dictionary<string, string>();
-                    headerData.Add("Authorization", $"Bearer {user.Token.TokenValue}");
+                    headerData.Add("Authorization", $"Bearer {user.UserToken.TokenValue}");
 
-                    while (collected == false && count <= 5)
+                    while (collected == false && pollCount < 3)
                     {
                         //Make Polling Request
-                        var pollingRequest = API.Put<List<PollResponse>>($"https://api.autorouter.aero/v1.0/router/{user.Route.RouteID}/longpoll", headerData, null);
+                        var pollingRequest = API.Put<List<PollResponse>>($"https://api.autorouter.aero/v1.0/router/{user.RouteToken.TokenValue}/longpoll", headerData, null);
 
                         ResponseModel<List<PollResponse>> responsePoll = await pollingRequest;
 
@@ -139,25 +139,28 @@ namespace EFB.Controllers
                         if (responsePoll.Result[routePos].Command == "solution")
                         {
                             collected = true;
-                            route = responsePoll.Result[routePos].FlightPlan;
+                            routeString = responsePoll.Result[routePos].FlightPlan;
                             break;
                         }
 
-                        Thread.Sleep(5000);
-                        count++;
+                        Thread.Sleep(3000);
+                        pollCount++;
 
                     }
 
                     if (collected)
                     {
                         //fill in route
-                        string finalRoute = ParseRoute(route);
+                        string finalRoute = RouteModel.ParseRoute(routeString);
 
-                        TempData["Error"] = finalRoute;
+                        RouteModel route = RouteModel.StringToRoute(departure, arrival, cruise, finalRoute);
+                        user.Route = route;
+                        HttpContext.Session.SetObject("User", user);
+                        
                         return RedirectToAction("Index", "Route");
                     }
 
-                    TempData["Error"] = "Unable to get route!";
+                    TempData["Error"] = $"Unable to get route after {pollCount} Attempts!";
                     return RedirectToAction("Index", "Route");
 
                 }
@@ -173,29 +176,6 @@ namespace EFB.Controllers
             }
         }
 
-        private string ParseRoute(string route){
-            TempData["Error"] = route;
-            
-            route.Replace('/', ' ');
-            var routeArr = route.Split(' ');
-
-            string finalRoute = "";
-
-            foreach (var item in routeArr)
-            {
-                var waypoint = item.Split('/')[0];
-                if (waypoint.Length <= 7 && waypoint.Length >= 3 && !waypoint.Contains('-'))
-                {
-                    finalRoute += $"{waypoint} ";
-
-                    if (waypoint.Length == 7 && finalRoute.Length > 8)
-                        break;
-                    
-                }
-            }
-
-            return finalRoute;
-
-        }
+        
     }
 }

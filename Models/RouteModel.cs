@@ -36,22 +36,6 @@ namespace EFB.Models
             }
         }
 
-        public IWaypoint Next(){
-            if(Current.Next != null){
-                Current = current.Next;
-                return Current;
-            }
-            return null;
-        }
-
-        public IWaypoint Previous(){
-            if(Current.Previous != null){
-                Current = current.Previous;
-                return Current;
-            }
-            return null;
-        }
-
         //Generate a route Object
         public static RouteModel StringToRoute(string departure, string arrival, uint cruise, string routeString){
             string[] routeTemp = routeString.Split(" ");

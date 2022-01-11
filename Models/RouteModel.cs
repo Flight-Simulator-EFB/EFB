@@ -38,7 +38,7 @@ namespace EFB.Models
 
         public IWaypoint Next(){
             if(Current.Next != null){
-                Current = current.Next;
+                Current = Current.Next;
                 return Current;
             }
             return null;
@@ -46,7 +46,7 @@ namespace EFB.Models
 
         public IWaypoint Previous(){
             if(Current.Previous != null){
-                Current = current.Previous;
+                Current = Current.Previous;
                 return Current;
             }
             return null;

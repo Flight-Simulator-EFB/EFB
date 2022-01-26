@@ -32,7 +32,12 @@ namespace EFB.Models
         }
 
         public NavdataModel[] Populate(){
-            MySqlConnection db = new MySqlConnection("root:XXXXXXX@XXX.XXX.XXX.XXX:3306/EFB");
+            MySqlConnection con = new MySqlConnection("root:XXXXXXX@XXX.XXX.XXX.XXX:3306/EFB");
+            con.Open();
+            
+            
+
+
         }
         
         

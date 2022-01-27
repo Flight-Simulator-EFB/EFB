@@ -7,7 +7,11 @@ namespace EFB.Sessions
     {
         public static void SetObject(this ISession session, string key, object value)
         {//Sets the object of a session to Object
-            session.SetString(key, JsonConvert.SerializeObject(value));
+            session.SetString(key, JsonConvert.SerializeObject(value, Formatting.None, 
+                new JsonSerializerSettings(){
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+                }
+            ));
         }
 
         public static T GetObject<T>(this ISession session, string key)

@@ -88,7 +88,7 @@ namespace EFB.Models
             route.Current.Next = route.Arrival;
             route.Arrival.Previous = route.Current;
 
-            route.Current = null;
+            route.Current = route.Departure;
 
             return route;
         }

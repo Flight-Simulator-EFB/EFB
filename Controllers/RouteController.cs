@@ -127,7 +127,7 @@ namespace EFB.Controllers
                     Dictionary<string, string> headerData = new Dictionary<string, string>();
                     headerData.Add("Authorization", $"Bearer {user.UserToken.TokenValue}");
 
-                    while (collected == false && pollCount < 3)
+                    while (collected == false && pollCount < 15)
                     {
                         //Make Polling Request
                         var pollingRequest = API.Put<List<PollResponse>>($"https://api.autorouter.aero/v1.0/router/{user.RouteToken.TokenValue}/longpoll", headerData, null);

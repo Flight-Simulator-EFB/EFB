@@ -134,13 +134,14 @@ namespace EFB.Controllers
 
                         ResponseModel<List<PollResponse>> responsePoll = await pollingRequest;
 
-
-                        int routePos = responsePoll.Result.Count - 1;
-                        if (responsePoll.Result[routePos].Command == "solution")
+                        foreach (var item in responsePoll.Result)
                         {
-                            collected = true;
-                            routeString = responsePoll.Result[routePos].FlightPlan;
-                            break;
+                            if (item.Command == "fpl" || item.Command == "solution")
+                            {
+                                collected = true;
+                                routeString = item.FlightPlan;
+                                break;
+                            }
                         }
 
                         Thread.Sleep(3000);

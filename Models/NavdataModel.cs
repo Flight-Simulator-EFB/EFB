@@ -90,6 +90,51 @@ namespace EFB.Models
             }
             return BinarySearch(ref data, midpoint, end, target);
         }
+
+        public static NavdataModel[] MergeSort(ref NavdataModel[] data, int start, int end)
+        {
+            if (start == end)
+            {//If we have narrowed it down to a single Item
+                return new NavdataModel[] { data[start] };
+            }
+
+            int midpoint = start + ((end - start) / 2);
+
+            //Split the data down to the left and the right portions
+            NavdataModel[] left = MergeSort(ref data, start, midpoint);
+            NavdataModel[] right = MergeSort(ref data, midpoint+1, end);
+
+            List<NavdataModel> combined = new List<NavdataModel>();
+
+            int leftPointer = 0;
+            int rightPointer = 0;
+
+            while (leftPointer <= left.Length-1 || rightPointer <= right.Length-1)
+            {
+                if (leftPointer == left.Length)
+                {//Take a value only from the right (left pointer had reached the end)
+                    AddValue(ref combined, right[rightPointer], ref rightPointer);
+                }else if (rightPointer == right.Length)
+                {//Take a value only from the left (right pointer has reached the end)
+                    AddValue(ref combined, left[leftPointer], ref leftPointer);
+                }else{
+                    if (String.Compare(left[leftPointer].Name, right[rightPointer].Name) <= 0)
+                    {//Take a value from the left hand side of the list. (Left value is considered 'smaller')
+                        AddValue(ref combined, left[leftPointer], ref leftPointer);
+                    }else{//Take a value from the right (right value is considered smaller)
+                        AddValue(ref combined, right[rightPointer], ref rightPointer);
+                    }
+                }
+            }
+
+            return combined.ToArray();
+
+        }
+
+        private static void AddValue(ref List<NavdataModel> data, NavdataModel value, ref int pointer){
+            pointer++;
+            data.Add(value);
+        }
         
     }
 }

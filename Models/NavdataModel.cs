@@ -67,7 +67,28 @@ namespace EFB.Models
             }
 
             return navdata.ToArray<NavdataModel>();
+        }
 
+        public static NavdataModel BinarySearch(ref NavdataModel[] data, int start, int end, string target){
+            int midpoint = start + ((end - start) / 2);
+            target = target.ToUpper().Trim();
+
+            string mid = data[midpoint].Name;
+
+            if (start == end-1)
+            {
+                if (mid == target)
+                {
+                    return data[midpoint];
+                }
+                return null;
+            }
+
+            if (String.Compare(target, mid) < 0)
+            {
+                return BinarySearch(ref data, start, midpoint, target);
+            }
+            return BinarySearch(ref data, midpoint, end, target);
         }
         
     }

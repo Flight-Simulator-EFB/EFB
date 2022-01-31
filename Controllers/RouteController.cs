@@ -152,9 +152,7 @@ namespace EFB.Controllers
                     {
                         //fill in route
                         string finalRoute = RouteModel.ParseRoute(routeString);
-
-                        RouteModel route = RouteModel.StringToRoute(departure, arrival, cruise, finalRoute);
-                        user.Route = route;
+                        user.Route = finalRoute;
                         HttpContext.Session.SetObject("User", user);
                         
                         return RedirectToAction("Index", "Route");

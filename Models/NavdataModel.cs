@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
+using Newtonsoft.Json;
+using Microsoft.AspNetCore.Mvc;
+using EFB.Sessions;
 
 namespace EFB.Models
 {
@@ -10,22 +13,26 @@ namespace EFB.Models
     {
         public int Id { get; set; }
         public string Name { get; set; }
+        public string Type { get; set; }
         public int? Frequency { get; set; }
         public string Latitude { get; set; }
         public string Longitude { get; set; }
         
 
-        public NavdataModel(int id, string name, string latitude, string longitude){
+        public NavdataModel(int id, string name, string type, string latitude, string longitude){
             Id = id;
             Name = name;
+            Type = type;
             Frequency = null;
             Latitude = latitude;
             Longitude = longitude;
         }
 
-        public NavdataModel(int id, string name, int? frequency, string latitude, string longitude){
+        [JsonConstructor]
+        public NavdataModel(int id, string name, string type, int? frequency, string latitude, string longitude){
             Id = id;
             Name = name;
+            Type = type;
             Frequency = frequency;
             Latitude = latitude;
             Longitude = longitude;
@@ -52,16 +59,16 @@ namespace EFB.Models
                 string latitude = reader.GetString(4);
                 string longitude = reader.GetString(5);
 
-                if (reader.GetString(2) == "VOR" || reader.GetString(2) == "NDB")
+                if (type == "VOR" || type == "NDB")
                 {
                     // int? frequency = reader.GetInt32(3);
                     int? frequency = null;
                     navdata.Add(
-                        new NavdataModel(id, name, frequency, latitude, longitude)
+                        new NavdataModel(id, name, type, frequency, latitude, longitude)
                     );
                 }else{
                     navdata.Add(
-                        new NavdataModel(id, name, latitude, longitude)
+                        new NavdataModel(id, name, type, latitude, longitude)
                     );
                 }
             }
